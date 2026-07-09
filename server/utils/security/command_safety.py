@@ -26,6 +26,7 @@ rewritten to evaluate inherent danger rather than intent alignment.
 """
 
 import concurrent.futures
+import contextvars
 import hashlib
 import json
 import logging
@@ -240,7 +241,12 @@ def _call_llm(prompt: str, user_id: Optional[str], session_id: Optional[str]) ->
     start = time.time()
     error_msg = None
     try:
-        future = _executor.submit(llm.invoke, messages)
+        # Propagate the caller's context (incl. the active OTEL/trace span) into
+        # the pool thread so the safety-judge LLM call nests under the current
+        # RCA trace instead of starting its own root trace. copy_context() only
+        # snapshots+restores contextvars; it cannot change the call's result or
+        # the timeout behavior below.
+        future = _executor.submit(contextvars.copy_context().run, llm.invoke, messages)
         result = future.result(timeout=_TIMEOUT_SECONDS)
     except Exception as e:
         error_msg = str(e)

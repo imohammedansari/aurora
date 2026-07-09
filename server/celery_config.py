@@ -278,6 +278,17 @@ if worker_process_init is not None:
 
         def _do_prewarm():
             try:
+                # Instrument this forked Celery child fresh (fork-safe). The RCA
+                # investigation runs here, so this is the process that must be
+                # traced. Exporter selection is driven by the MONOCLE_EXPORTER
+                # env var (e.g. "file,okahu"), not hardcoded.
+                from monocle_apptrace import setup_monocle_telemetry
+                setup_monocle_telemetry(workflow_name="aurora-sre")
+                _prewarm_logger.info("[PREWARM] Monocle telemetry initialized (code hook)")
+            except Exception as e:
+                _prewarm_logger.warning("[PREWARM] Monocle init failed: %s", e)
+
+            try:
                 from guardrails.input_rail import _ensure_rails_in_thread
                 _ensure_rails_in_thread()
                 _prewarm_logger.info("[PREWARM] NeMo Guardrails ready")
