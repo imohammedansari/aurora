@@ -56,6 +56,10 @@ from utils.text.text_utils import clean_markdown
 from utils.internal.api_handler import handle_http_request
 from utils.auth.stateless_auth import validate_user_exists, get_org_id_for_user, set_rls_context
 
+from monocle_apptrace import setup_monocle_telemetry
+
+setup_monocle_telemetry(workflow_name="aurora-sre", monocle_exporters_list="file")
+
 
 class _MockState:
     """Minimal state object for set_user_context when called outside the agent loop."""
