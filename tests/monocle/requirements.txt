@@ -1,0 +1,3 @@
+# Installing monocle_test_tools pulls in pytest + monocle_apptrace transitively.
+monocle_test_tools
+python-dotenv
